@@ -1,60 +1,127 @@
-import { readFile } from "fs/promises";
-import { join } from "path";
 import { Mistral } from "@mistralai/mistralai";
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { createClient } from "@supabase/supabase-js";
 
-//Windows
-// const apiKey = process.env.MISTRAL_AI_API_KEY;
-//Linux
-const apiKey = process.env.MISTRAL_AI_API_KEY;
-const client = new Mistral({ apiKey });
+const mistralApiKey = process.env.MISTRAL_AI_API_KEY;
+const mistralClient = new Mistral({ apiKey: mistralApiKey });
 
-const main = async () => {
-  const chatResponse = await client.chat.complete({
-    model: "mistral-tiny",
-    messages: [
-      {
-        role: "system",
-        content: "You are interviewer for .net position, Reply with JSON",
-      },
-      { role: "user", content: "I am Nayden " },
-    ],
-    //from 0 to 1 more focus > more creative
-    temperature: 0.5,
-    responseFormat: { type: "json_object" },
-  });
+const data = [
+  {
+    transaction_id: "T1001",
+    customer_id: "C001",
+    payment_amount: 125.5,
+    payment_date: "2021-10-05",
+    payment_status: "Paid",
+  },
+  {
+    transaction_id: "T1002",
+    customer_id: "C002",
+    payment_amount: 89.99,
+    payment_date: "2021-10-06",
+    payment_status: "Unpaid",
+  },
+  {
+    transaction_id: "T1003",
+    customer_id: "C003",
+    payment_amount: 120.0,
+    payment_date: "2021-10-07",
+    payment_status: "Paid",
+  },
+  {
+    transaction_id: "T1004",
+    customer_id: "C002",
+    payment_amount: 54.3,
+    payment_date: "2021-10-05",
+    payment_status: "Paid",
+  },
+  {
+    transaction_id: "T1005",
+    customer_id: "C001",
+    payment_amount: 210.2,
+    payment_date: "2021-10-08",
+    payment_status: "Pending",
+  },
+];
 
-  //   for await (const chunk of chatResponse) {
-  //     chunk.data.choices[0].delta.content;
-  //   }
-
-  if (chatResponse && chatResponse.choices) {
-    console.log(chatResponse.choices[0].message);
+function getPaymentStatus({ transactionId }: { transactionId: string }) {
+  const transaction = data.find((row) => row.transaction_id === transactionId);
+  if (transaction) {
+    return JSON.stringify({ status: transaction.payment_status });
   }
+  return JSON.stringify({ error: "transaction id not found." });
+}
+function getPaymentDate({ transactionId }: { transactionId: string }) {
+  const transaction = data.find((row) => row.transaction_id === transactionId);
+  if (transaction) {
+    return JSON.stringify({ date: transaction.payment_date });
+  }
+  return JSON.stringify({ error: "transaction id not found." });
+}
+const availableFunctions = {
+  getPaymentDate,
+  getPaymentStatus,
 };
 
-async function splitDocument(path: string) {
-  try {
-    const filePath = join(path);
-    const text = await readFile(filePath, "utf8");
-    const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 250,
-      chunkOverlap: 40,
-    });
-    const output = await splitter.createDocuments([text]);
-    return output.map((chunk) => chunk.pageContent);
-  } catch (error) {
-    console.error("Error reading file:", error);
+async function agent(query: string) {
+  const messages = [{ role: "user", content: query }];
+
+  const response = await mistralClient.chat.complete({
+    model: "mistral-large-latest",
+    // @ts-ignore
+    messages: messages,
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "getPaymentStatus",
+          description: "Get payment status of a transaction",
+          parameters: {
+            type: "object",
+            properties: {
+              transactionId: {
+                type: "string",
+                description: "The transaction id.",
+              },
+            },
+            required: ["transactionId"],
+          },
+        },
+      },
+      {
+        type: "function",
+        function: {
+          name: "getPaymentDate",
+          description: "Get payment date of transaction",
+          parameters: {
+            type: "object",
+            properties: {
+              transactionId: {
+                type: "string",
+                description: "The transaction id.",
+              },
+            },
+            required: ["transactionId"],
+          },
+        },
+      },
+    ],
+  });
+
+  const message = response.choices![0].message;
+  // @ts-ignore
+  messages.push(message);
+
+  if (response.choices![0].finishReason === "tool_calls") {
+    const $function = message.toolCalls![0].function;
+    const functionName = $function.name;
+    //@ts-ignore
+    const functionArgs = JSON.parse($function.arguments);
+    //@ts-ignore
+    const funcResponse = availableFunctions[functionName](functionArgs);
+    console.log(funcResponse);
   }
 }
-// await splitDocument("handbook.txt");
-// main();
 
-const exampleChunk =
-  "professional ethics and behavior are expected of all Ambrics employees. Further, Ambrics expects each employee to display good judgment,";
-const response = await client.embeddings.create({
-  model: "mistral-embed",
-  inputs: [exampleChunk],
-});
-console.log(response);
+const response = await agent("Is the transaction T1001 paid?");
+// const response = await agent("When is transaction T1001 paid ");
 
+// console.log(response.choices![0].message.toolCalls![0].function);
