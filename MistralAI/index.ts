@@ -64,64 +64,75 @@ const availableFunctions = {
 async function agent(query: string) {
   const messages = [{ role: "user", content: query }];
 
-  const response = await mistralClient.chat.complete({
-    model: "mistral-large-latest",
+  for (let index = 0; index < 5; index++) {
+    const response = await mistralClient.chat.complete({
+      model: "mistral-large-latest",
+      // @ts-ignore
+      messages: messages,
+      tools: [
+        {
+          type: "function",
+          function: {
+            name: "getPaymentStatus",
+            description: "Get payment status of a transaction",
+            parameters: {
+              type: "object",
+              properties: {
+                transactionId: {
+                  type: "string",
+                  description: "The transaction id.",
+                },
+              },
+              required: ["transactionId"],
+            },
+          },
+        },
+        {
+          type: "function",
+          function: {
+            name: "getPaymentDate",
+            description: "Get payment date of transaction",
+            parameters: {
+              type: "object",
+              properties: {
+                transactionId: {
+                  type: "string",
+                  description: "The transaction id.",
+                },
+              },
+              required: ["transactionId"],
+            },
+          },
+        },
+      ],
+    });
+
+    const message = response.choices![0].message;
     // @ts-ignore
-    messages: messages,
-    tools: [
-      {
-        type: "function",
-        function: {
-          name: "getPaymentStatus",
-          description: "Get payment status of a transaction",
-          parameters: {
-            type: "object",
-            properties: {
-              transactionId: {
-                type: "string",
-                description: "The transaction id.",
-              },
-            },
-            required: ["transactionId"],
-          },
-        },
-      },
-      {
-        type: "function",
-        function: {
-          name: "getPaymentDate",
-          description: "Get payment date of transaction",
-          parameters: {
-            type: "object",
-            properties: {
-              transactionId: {
-                type: "string",
-                description: "The transaction id.",
-              },
-            },
-            required: ["transactionId"],
-          },
-        },
-      },
-    ],
-  });
+    messages.push(message);
 
-  const message = response.choices![0].message;
-  // @ts-ignore
-  messages.push(message);
-
-  if (response.choices![0].finishReason === "tool_calls") {
-    const $function = message.toolCalls![0].function;
-    const functionName = $function.name;
-    //@ts-ignore
-    const functionArgs = JSON.parse($function.arguments);
-    //@ts-ignore
-    const funcResponse = availableFunctions[functionName](functionArgs);
-    console.log(funcResponse);
+    if (response.choices![0].finishReason === "stop") {
+      return message.content;
+    } else if (response.choices![0].finishReason === "tool_calls") {
+      const $function = message.toolCalls![0].function;
+      const functionName = $function.name;
+      //@ts-ignore
+      const functionArgs = JSON.parse($function.arguments);
+      //@ts-ignore
+      const funcResponse = availableFunctions[functionName](functionArgs);
+      messages.push({
+        role: "tool",
+        //@ts-ignore
+        name: functionName,
+        content: funcResponse,
+      });
+    }
   }
 }
 
 const response = await agent("Is the transaction T1001 paid?");
+console.log(response);
+
 // const response = await agent("When is transaction T1001 paid ");
 
 // console.log(response.choices![0].message.toolCalls![0].function);
