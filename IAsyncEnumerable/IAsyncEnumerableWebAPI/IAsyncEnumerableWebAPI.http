@@ -1,0 +1,6 @@
+@IAsyncEnumerableWebAPI_HostAddress = http://localhost:5211
+
+GET {{IAsyncEnumerableWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
