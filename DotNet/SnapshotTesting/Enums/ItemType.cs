@@ -1,9 +1,10 @@
-namespace TestConsoleAppTemplate.Enums;
+namespace SnapshotTesting.Enums;
 
 public enum ItemType
 {
-    Solid,
-    Liquid,
-    Gase,
-    Soft,
+    None = 0,
+    Solid = 1,
+    Liquid = 2,
+    Gase = 3,
+    Soft = 4,
 }

@@ -1,4 +1,5 @@
-﻿using TestConsoleAppTemplate.Data;
+﻿using SnapshotTesting.Enums;
+using TestConsoleAppTemplate.Data;
 using TestConsoleAppTemplate.Models;
 using TestConsoleAppTemplate.Services;
 
@@ -12,6 +13,6 @@ public class Program
         var womenPackingList = PackingLists.GetPackingListForWomen()[0];
         var packingListService = new PackingListService();
 
-        manPackingList.AddPackingItem(new PackingItem("Gun", 2, Enums.ItemType.Solid));
+        manPackingList.AddPackingItem(new PackingItem("Gun", 2, ItemType.Solid));
     }
 }

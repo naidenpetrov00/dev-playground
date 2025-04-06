@@ -1,0 +1,54 @@
+﻿[
+  {
+    Name: Business Trip,
+    TimeOfTravel: DateTime_1,
+    PackingItems: [
+      {
+        ItemName: Laptop,
+        ItemSize: 5,
+        ItemType: Solid
+      },
+      {
+        ItemName: Formal Shoes,
+        ItemSize: 4,
+        ItemType: Soft
+      },
+      {
+        ItemName: Notebook,
+        ItemSize: 2,
+        ItemType: Solid
+      },
+      {
+        ItemName: Tie,
+        ItemSize: 1,
+        ItemType: Soft
+      }
+    ]
+  },
+  {
+    Name: Hiking Adventure,
+    TimeOfTravel: DateTime_2,
+    PackingItems: [
+      {
+        ItemName: Backpack,
+        ItemSize: 5,
+        ItemType: Solid
+      },
+      {
+        ItemName: Water Bottle,
+        ItemSize: 2,
+        ItemType: Liquid
+      },
+      {
+        ItemName: Tent,
+        ItemSize: 10,
+        ItemType: Soft
+      },
+      {
+        ItemName: Hiking Boots,
+        ItemSize: 4,
+        ItemType: Soft
+      }
+    ]
+  }
+]

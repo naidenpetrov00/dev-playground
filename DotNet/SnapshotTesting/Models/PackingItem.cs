@@ -1,4 +1,4 @@
-using TestConsoleAppTemplate.Enums;
+using SnapshotTesting.Enums;
 
 namespace TestConsoleAppTemplate.Models;
 
