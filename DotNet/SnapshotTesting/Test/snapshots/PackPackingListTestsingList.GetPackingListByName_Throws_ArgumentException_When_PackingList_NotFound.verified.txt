@@ -1,0 +1,8 @@
+﻿{
+  Type: ArgumentException,
+  Message: No Packing List Found!,
+  ParamName: NotSuchName,
+  StackTrace:
+at TestConsoleAppTemplate.Services.PackingListService.GetPackingListByName(String packingListName, List`1 packingLists)
+at SnapshotTesting.Test.PackPackingListTestsingList.<GetPackingListByName_Throws_ArgumentException_When_PackingList_NotFound>b__5_0()
+}
